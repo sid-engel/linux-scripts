@@ -1,0 +1,9 @@
+
+# Fstab Entry
+
+//NAS-IP/SHARE /mnt/LOCALMOUNTLOCATION cifs credentials=/root/.CREDSFILE,vers=3.0,iocharset=utf8,uid=1000,gid=1000 0 0
+
+# CREDSFILE
+
+username=NASUSERNAME
+password=NASPASSWORD
