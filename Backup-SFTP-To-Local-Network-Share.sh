@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #####################################################################
-# Pure FTP Download Backup Script (using lftp)
-# - Downloads remote directory via FTP (user/pass auth)
+# Pure SFTP Download Backup Script
+# - Downloads remote directory via SFTP (password auth)
 # - Stages content in a local directory
 # - Archives into a date-named .tar.gz
 # - Deletes staged folder afterward
@@ -11,20 +11,20 @@
 
 ########## CONFIGURATION ##########
 
-# FTP server credentials
-FTP_HOST="ftp.ftphost.com"
-FTP_USER="ftp-username"
-FTP_PASS="ftp-password"
-FTP_PORT="21"
+# SFTP server credentials
+SFTP_HOST="example.com"
+SFTP_USER="youruser"
+SFTP_PASS="yourpassword"
+SFTP_PORT="22"
 
-# Remote directory to back up (on FTP server)
-REMOTE_DIR="/remote-directory"
+# Remote directory to back up
+REMOTE_DIR="/remote/data"
 
 # Local staging directory (where raw downloaded files go)
-LOCAL_STAGING_DIR="/mnt/staging-dir"
+LOCAL_STAGING_DIR="/mnt/backup/staging"
 
 # Local archive directory (final .tar.gz files)
-LOCAL_ARCHIVE_DIR="/mnt/archive-dir"
+LOCAL_ARCHIVE_DIR="/mnt/backup/archives"
 
 # Number of days to keep archive files
 RETENTION_DAYS=14
@@ -45,24 +45,17 @@ echo "===== Backup Started: $(date) ====="
 echo "Staging to: $STAGING_TARGET"
 echo "Archive will be: $ARCHIVE_PATH"
 
-########## DOWNLOAD VIA FTP (LFTP MIRROR) ##########
+########## DOWNLOAD VIA PURE SFTP ##########
 
-echo "Starting FTP mirror from $FTP_HOST:$FTP_PORT$REMOTE_DIR ..."
-
-lftp -u "$FTP_USER","$FTP_PASS" -p "$FTP_PORT" "$FTP_HOST" <<EOF
-set ftp:passive-mode on
-set ssl:verify-certificate no
-set net:timeout 30
-set net:max-retries 3
-set net:persist-retries 2
-
-# Mirror remote directory to local staging directory
-mirror --verbose --continue --only-newer "$REMOTE_DIR" "$STAGING_TARGET"
+sshpass -p "$SFTP_PASS" sftp -oPort="$SFTP_PORT" -oBatchMode=no "$SFTP_USER@$SFTP_HOST" <<EOF
+lcd "$STAGING_TARGET"
+cd "$REMOTE_DIR"
+get -r .
 bye
 EOF
 
 if [ $? -ne 0 ]; then
-    echo "ERROR: FTP download (mirror) failed."
+    echo "ERROR: SFTP download failed."
     exit 1
 fi
 
